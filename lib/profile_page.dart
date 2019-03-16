@@ -251,9 +251,11 @@ class _ProfilePage extends State<ProfilePage> {
         for (var doc in snap.documents) {
           posts.add(new ImagePost.fromDocument(doc));
         }
-        setState(() {
-          postCount = snap.documents.length;
-        });
+        if (mounted) {
+          setState(() {
+            postCount = snap.documents.length;
+          });
+        }
 
         return posts.reversed.toList();
       }

@@ -1,4 +1,4 @@
-package me.danics.firestoretest;
+package mannfeldt.fluttergram;
 
 import android.os.Bundle;
 

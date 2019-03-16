@@ -80,7 +80,7 @@ class _Feed extends State<Feed> {
 
     String userId = googleSignIn.currentUser.id.toString();
     var url =
-        'https://us-central1-mp-rps.cloudfunctions.net/getFeed?uid=' + userId;
+        'https://us-central1-fluttergram-a6612.cloudfunctions.net/getFeed?uid=' + userId;
     var httpClient = new HttpClient();
 
     List<ImagePost> listOfPosts;

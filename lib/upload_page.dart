@@ -248,7 +248,7 @@ class PostForm extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             new CircleAvatar(
-              backgroundImage: new NetworkImage(currentUserModel.photoUrl),
+              backgroundImage: new NetworkImage(currentUserModel != null ? currentUserModel.photoUrl: 'http://www.rangerwoodperiyar.com/images/joomlart/demo/default.jpg'),
             ),
             new Container(
               width: 250.0,
@@ -307,7 +307,7 @@ void postToFireStore(
   var reference = Firestore.instance.collection('insta_posts');
 
   reference.add({
-    "username": currentUserModel.username,
+    "username": currentUserModel == null ? 'username not found' :currentUserModel.username,
     "location": location,
     "likes": {},
     "mediaUrl": mediaUrl,

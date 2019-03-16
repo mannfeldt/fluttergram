@@ -45,7 +45,7 @@ Future<Null> _ensureLoggedIn(BuildContext context) async {
   }
 }
 
-Future<Null> _setUpNotifications() async {
+Future<User> _setUpNotifications() async {
   if (Platform.isAndroid) {
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
@@ -58,16 +58,19 @@ Future<Null> _setUpNotifications() async {
         print('on launch $message');
       },
     );
-
     _firebaseMessaging.getToken().then((token) {
       print("Firebase Messaging Token: " + token);
-
+//hårdkodar till mannfeldt93s userid på document för att se om notifikationer då kommer fram,
+//behöver köra denn setupnotifications funktionen senare när googlesignin eller usermodel är satt
+//DET FUNGERAR MED HÅRDKODNING....NUMÅSTE JAG BARA GÖRA DET DYNAMISKT FÅ TILL RÄTT ID
       Firestore.instance
           .collection("insta_users")
           .document(currentUserModel.id)
           .updateData({"androidNotificationToken": token});
     });
+    return currentUserModel;
   }
+  return null;
 }
 
 Future<Null> _silentLogin(BuildContext context) async {
@@ -244,23 +247,28 @@ class _HomePageState extends State<HomePage> {
               activeColor: Colors.orange,
               items: <BottomNavigationBarItem>[
                 new BottomNavigationBarItem(
-                    icon: new Icon(Icons.home, color: (_page == 0) ? Colors.black : Colors.grey),
+                    icon: new Icon(Icons.home,
+                        color: (_page == 0) ? Colors.black : Colors.grey),
                     title: new Container(height: 0.0),
                     backgroundColor: Colors.white),
                 new BottomNavigationBarItem(
-                    icon: new Icon(Icons.search, color: (_page == 1) ? Colors.black : Colors.grey),
+                    icon: new Icon(Icons.search,
+                        color: (_page == 1) ? Colors.black : Colors.grey),
                     title: new Container(height: 0.0),
                     backgroundColor: Colors.white),
                 new BottomNavigationBarItem(
-                    icon: new Icon(Icons.add_circle, color: (_page == 2) ? Colors.black : Colors.grey),
+                    icon: new Icon(Icons.add_circle,
+                        color: (_page == 2) ? Colors.black : Colors.grey),
                     title: new Container(height: 0.0),
                     backgroundColor: Colors.white),
                 new BottomNavigationBarItem(
-                    icon: new Icon(Icons.star, color: (_page == 3) ? Colors.black : Colors.grey),
+                    icon: new Icon(Icons.star,
+                        color: (_page == 3) ? Colors.black : Colors.grey),
                     title: new Container(height: 0.0),
                     backgroundColor: Colors.white),
                 new BottomNavigationBarItem(
-                    icon: new Icon(Icons.person, color: (_page == 4) ? Colors.black : Colors.grey),
+                    icon: new Icon(Icons.person,
+                        color: (_page == 4) ? Colors.black : Colors.grey),
                     title: new Container(height: 0.0),
                     backgroundColor: Colors.white),
               ],
@@ -277,11 +285,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void setUpNotifications() {
-    _setUpNotifications();
-    setState(() {
-      setupNotifications = true;
-    });
+  void setUpNotifications() async {
+    // https://stackoverflow.com/questions/47619229/google-sign-in-failed-com-google-android-gms-common-api-apiexception-10
+    // https://flutter.dev/docs/deployment/android
+    // jag behvöer signera apkn med samma sha1
+    // försök göra precis det eller signera om allt.
+    // jag har gjort signeringen nu tycker jag. Vierfier signeringen
+    // nästa steg kan vara att felsöka googlesignin beroendet. känt fel på den? eller söka mer på liknande trådar som den ovan på so
+    //nu FUNGERAR DET TYP!!! men får lite fel vid bilduppladdning... felsök
+    var result = await _setUpNotifications();
+    if (result != null) {
+      setState(() {
+        setupNotifications = true;
+      });
+    }
   }
 
   void silentLogin(BuildContext context) async {
