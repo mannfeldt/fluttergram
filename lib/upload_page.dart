@@ -11,6 +11,11 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:math' as Math;
 import 'location.dart';
 import 'package:geocoder/geocoder.dart';
+import 'package:firebase_ml_vision/firebase_ml_vision.dart';
+
+const CONFIDENCE_THRESHOLD = 0.8;
+const REQUIRED_LABEL = 'Cat';
+const FORBIDDEN_LABELS = ['Dog', 'Bird', 'Toy'];
 
 class Uploader extends StatefulWidget {
   _Uploader createState() => new _Uploader();
@@ -18,12 +23,18 @@ class Uploader extends StatefulWidget {
 
 class _Uploader extends State<Uploader> {
   File file;
+
+  bool labelIsMissing = false;
   //Strings required to save address
   Address address;
 
   Map<String, double> currentLocation = new Map();
   TextEditingController descriptionController = new TextEditingController();
   TextEditingController locationController = new TextEditingController();
+
+  //List<VisionLabel> imageLabels = <VisionLabel>[];
+
+  //FirebaseVisionLabelDetector detector = FirebaseVisionLabelDetector.instance;
 
   bool uploading = false;
   bool promted = false;
@@ -52,60 +63,71 @@ class _Uploader extends State<Uploader> {
   }
 
   Widget build(BuildContext context) {
-    return file == null
-        ? new IconButton(
-            icon: new Icon(Icons.file_upload), onPressed: _selectImage)
-        : new Scaffold(
-            resizeToAvoidBottomPadding: false,
-            appBar: new AppBar(
-              backgroundColor: Colors.white70,
-              leading: new IconButton(
-                  icon: new Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: clearImage),
-              title: const Text(
-                'Post to',
-                style: const TextStyle(color: Colors.black),
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    onPressed: postImage,
-                    child: new Text(
-                      "Post",
-                      style: new TextStyle(
-                          color: Colors.blueAccent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20.0),
-                    ))
-              ],
+    if (file == null) {
+      return Center(
+          child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          new IconButton(
+              icon: new Icon(Icons.file_upload), onPressed: _selectImage),
+          Text(labelIsMissing
+              ? REQUIRED_LABEL + ' missing, try again'
+              : 'Upload image'),
+        ],
+      ));
+    } else {
+      return new Scaffold(
+          resizeToAvoidBottomPadding: false,
+          appBar: new AppBar(
+            backgroundColor: Colors.white70,
+            leading: new IconButton(
+                icon: new Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: clearImage),
+            title: const Text(
+              'Post to',
+              style: const TextStyle(color: Colors.black),
             ),
-            body: new ListView(
-              children: <Widget>[
-                new PostForm(
-                  imageFile: file,
-                  descriptionController: descriptionController,
-                  locationController: locationController,
-                  loading: uploading,
-                ),
-                new Divider(), //scroll view where we will show location to users
-                (address == null)
-                    ? Container()
-                    : new SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.only(right: 5.0, left: 5.0),
-                        child: Row(
-                          children: <Widget>[
-                            buildLocationButton(address.featureName),
-                            buildLocationButton(address.subLocality),
-                            buildLocationButton(address.locality),
-                            buildLocationButton(address.subAdminArea),
-                            buildLocationButton(address.adminArea),
-                            buildLocationButton(address.countryName),
-                          ],
-                        ),
+            actions: <Widget>[
+              new FlatButton(
+                  onPressed: postImage,
+                  child: new Text(
+                    "Post",
+                    style: new TextStyle(
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.0),
+                  ))
+            ],
+          ),
+          body: new ListView(
+            children: <Widget>[
+              new PostForm(
+                imageFile: file,
+                descriptionController: descriptionController,
+                locationController: locationController,
+                loading: uploading,
+              ),
+              new Divider(), //scroll view where we will show location to users
+              (address == null)
+                  ? Container()
+                  : new SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.only(right: 5.0, left: 5.0),
+                      child: Row(
+                        children: <Widget>[
+                          buildLocationButton(address.featureName),
+                          buildLocationButton(address.subLocality),
+                          buildLocationButton(address.locality),
+                          buildLocationButton(address.subAdminArea),
+                          buildLocationButton(address.adminArea),
+                          buildLocationButton(address.countryName),
+                        ],
                       ),
-                (address == null) ? Container() : Divider(),
-              ],
-            ));
+                    ),
+              (address == null) ? Container() : Divider(),
+            ],
+          ));
+    }
   }
 
   //method to build buttons with location.
@@ -154,9 +176,37 @@ class _Uploader extends State<Uploader> {
                   Navigator.pop(context);
                   File imageFile =
                       await ImagePicker.pickImage(source: ImageSource.camera);
-                  setState(() {
-                    file = imageFile;
-                  });
+
+                  final image = FirebaseVisionImage.fromFile(imageFile);
+                  final labelDetector = FirebaseVision.instance.labelDetector();
+                  final labels = await labelDetector.detectInImage(image);
+                  //1. do some redesign
+                  //2. add credit to fluttergram if required
+                  //3. rebrand as catogram? or some other good name. 
+                  //4. put it out on google play
+                  //5. make another one for dogs?
+                  //6. make another one with no sad faces etc.
+                  // only label=selfie and facerecognition must say smiling > threshhold
+                  final reqLabel = labels.firstWhere(
+                      (label) => label.label == REQUIRED_LABEL,
+                      orElse: () => null);
+                  final foLabel = labels.firstWhere(
+                      (label) => FORBIDDEN_LABELS.contains(label.label),
+                      orElse: () => null);
+
+                  if (reqLabel != null &&
+                      reqLabel.confidence > CONFIDENCE_THRESHOLD &&
+                      (foLabel == null ||
+                          foLabel.confidence < reqLabel.confidence)) {
+                    setState(() {
+                      file = imageFile;
+                      labelIsMissing = false;
+                    });
+                  } else {
+                    setState(() {
+                      labelIsMissing = true;
+                    });
+                  }
                 }),
             new SimpleDialogOption(
                 child: const Text('Choose from Gallery'),
@@ -164,9 +214,31 @@ class _Uploader extends State<Uploader> {
                   Navigator.of(context).pop();
                   File imageFile =
                       await ImagePicker.pickImage(source: ImageSource.gallery);
-                  setState(() {
-                    file = imageFile;
-                  });
+                  final image = FirebaseVisionImage.fromFile(imageFile);
+                  final labelDetector = FirebaseVision.instance.labelDetector();
+                  final labels = await labelDetector.detectInImage(image);
+                  print('test');
+
+                  final reqLabel = labels.firstWhere(
+                      (label) => label.label == REQUIRED_LABEL,
+                      orElse: () => null);
+                  final foLabel = labels.firstWhere(
+                      (label) => FORBIDDEN_LABELS.contains(label.label),
+                      orElse: () => null);
+
+                  if (reqLabel != null &&
+                      reqLabel.confidence > CONFIDENCE_THRESHOLD &&
+                      (foLabel == null ||
+                          foLabel.confidence < reqLabel.confidence)) {
+                    setState(() {
+                      file = imageFile;
+                      labelIsMissing = false;
+                    });
+                  } else {
+                    setState(() {
+                      labelIsMissing = true;
+                    });
+                  }
                 }),
             new SimpleDialogOption(
               child: const Text("Cancel"),
@@ -248,7 +320,9 @@ class PostForm extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             new CircleAvatar(
-              backgroundImage: new NetworkImage(currentUserModel != null ? currentUserModel.photoUrl: 'http://www.rangerwoodperiyar.com/images/joomlart/demo/default.jpg'),
+              backgroundImage: new NetworkImage(currentUserModel != null
+                  ? currentUserModel.photoUrl
+                  : 'http://www.rangerwoodperiyar.com/images/joomlart/demo/default.jpg'),
             ),
             new Container(
               width: 250.0,
@@ -307,7 +381,9 @@ void postToFireStore(
   var reference = Firestore.instance.collection('insta_posts');
 
   reference.add({
-    "username": currentUserModel == null ? 'username not found' :currentUserModel.username,
+    "username": currentUserModel == null
+        ? 'username not found'
+        : currentUserModel.username,
     "location": location,
     "likes": {},
     "mediaUrl": mediaUrl,

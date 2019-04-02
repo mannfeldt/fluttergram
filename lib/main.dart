@@ -60,9 +60,6 @@ Future<User> _setUpNotifications() async {
     );
     _firebaseMessaging.getToken().then((token) {
       print("Firebase Messaging Token: " + token);
-//hårdkodar till mannfeldt93s userid på document för att se om notifikationer då kommer fram,
-//behöver köra denn setupnotifications funktionen senare när googlesignin eller usermodel är satt
-//DET FUNGERAR MED HÅRDKODNING....NUMÅSTE JAG BARA GÖRA DET DYNAMISKT FÅ TILL RÄTT ID
       Firestore.instance
           .collection("insta_users")
           .document(currentUserModel.id)
@@ -97,11 +94,8 @@ tryCreateUserRecord(BuildContext context) async {
   }
   DocumentSnapshot userRecord = await ref.document(user.id).get();
   if (userRecord.data == null) {
-    // no user record exists, time to create
-
     String userName = await Navigator.push(
       context,
-      // We'll create the SelectionScreen in the next step!
       new MaterialPageRoute(
           builder: (context) => new Center(
                 child: new Scaffold(
@@ -141,20 +135,11 @@ tryCreateUserRecord(BuildContext context) async {
 }
 
 class Fluttergram extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
       title: 'Fluttergram',
       theme: new ThemeData(
-          // This is the theme of your application.
-          //
-          // Try running your application with "flutter run". You'll see the
-          // application has a blue toolbar. Then, without quitting the app, try
-          // changing the primarySwatch below to Colors.green and then invoke
-          // "hot reload" (press "r" in the console where you ran "flutter run",
-          // or press Run > Flutter Hot Reload in IntelliJ). Notice that the
-          // counter didn't reset back to zero; the application is not restarted.
           primarySwatch: Colors.blue,
           buttonColor: Colors.pink,
           primaryIconTheme: new IconThemeData(color: Colors.black)),
@@ -286,13 +271,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void setUpNotifications() async {
-    // https://stackoverflow.com/questions/47619229/google-sign-in-failed-com-google-android-gms-common-api-apiexception-10
-    // https://flutter.dev/docs/deployment/android
-    // jag behvöer signera apkn med samma sha1
-    // försök göra precis det eller signera om allt.
-    // jag har gjort signeringen nu tycker jag. Vierfier signeringen
-    // nästa steg kan vara att felsöka googlesignin beroendet. känt fel på den? eller söka mer på liknande trådar som den ovan på so
-    //nu FUNGERAR DET TYP!!! men får lite fel vid bilduppladdning... felsök
     var result = await _setUpNotifications();
     if (result != null) {
       setState(() {
