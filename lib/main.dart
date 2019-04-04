@@ -138,12 +138,12 @@ class Fluttergram extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: 'Fluttergram',
+      title: 'Instacats',
       theme: new ThemeData(
           primarySwatch: Colors.blue,
           buttonColor: Colors.pink,
           primaryIconTheme: new IconThemeData(color: Colors.black)),
-      home: new HomePage(title: 'Fluttergram'),
+      home: new HomePage(title: 'Instacats'),
     );
   }
 }
@@ -171,7 +171,7 @@ class _HomePageState extends State<HomePage> {
           child: new Column(
             children: <Widget>[
               new Text(
-                'Fluttergram',
+                'Instacats',
                 style: new TextStyle(
                     fontSize: 60.0,
                     fontFamily: "Billabong",

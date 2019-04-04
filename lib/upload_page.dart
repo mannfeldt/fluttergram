@@ -66,13 +66,20 @@ class _Uploader extends State<Uploader> {
     if (file == null) {
       return Center(
           child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          new IconButton(
-              icon: new Icon(Icons.file_upload), onPressed: _selectImage),
-          Text(labelIsMissing
-              ? REQUIRED_LABEL + ' missing, try again'
-              : 'Upload image'),
+          Text(' '),
+          Column(
+            children: <Widget>[
+              new IconButton(
+                  icon: new Icon(Icons.file_upload), onPressed: _selectImage),
+              Text(labelIsMissing
+                  ? REQUIRED_LABEL + ' missing, try again'
+                  : 'Upload image'),
+            ],
+          ),
+          Text('Credit: Fluttergram by mdanics is licensed under CC BY 4.0. Modifications has been made'),
         ],
       ));
     } else {
@@ -182,7 +189,7 @@ class _Uploader extends State<Uploader> {
                   final labels = await labelDetector.detectInImage(image);
                   //1. do some redesign
                   //2. add credit to fluttergram if required
-                  //3. rebrand as catogram? or some other good name. 
+                  //3. rebrand as catogram? or some other good name.
                   //4. put it out on google play
                   //5. make another one for dogs?
                   //6. make another one with no sad faces etc.
